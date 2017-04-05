@@ -1,4 +1,4 @@
-MAIN = cpu
+MAIN = ram
 TESTBENCH = ${MAIN}_tb.cpp
 
 all: compile run simulate

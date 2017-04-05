@@ -7,70 +7,74 @@
 
 int main(int argc, char **argv, char **env)
 {
-  Verilated::commandArgs(argc, argv);
-  Verilated::traceEverOn(true);
-  VerilatedVcdC *gtkw = new VerilatedVcdC;
+    Verilated::commandArgs(argc, argv);
+    Verilated::traceEverOn(true);
+    VerilatedVcdC *gtkw = new VerilatedVcdC;
 
-  int clk, i, j; 
-  Vram *ram = new Vram;
-  ram->trace(gtkw, 99);
-  gtkw->open("ram.vcd");
-  
-  clk = 0;
-  ram->rw = WRITE;
-  i = j = 0;
-  while(!ram->data[15])
+    int clk, i, j;
+    Vram *ram = new Vram;
+    ram->trace(gtkw, 99);
+    gtkw->open("ram.vcd");
+
+    // Guardar datos en la memoria
+    clk = 0;
+    ram->rw = WRITE;
+    i = j = 0;
+    while(i <= 15)
     {
-      gtkw->dump(clk);
-      if(j%2)
-        i++;  
-      ram->datain = i;
-      ram->addr = i;
-      ram->clk = !ram->clk;
-      ram->eval();
-      clk++;
-      j++;
+        gtkw->dump(clk);
+        if(j%2)
+            i++;
+        ram->datain = rand() % 16;
+        ram->addr = i;
+        ram->clk = !ram->clk;
+        ram->eval();
+        clk++;
+        j++;
     }
-  for(j = 1; j <=2; j++)
-    {    
-      gtkw->dump(clk);
-      ram->clk = !ram->clk;
-      ram->eval();
-      clk++;
-    }
-  i = j = 0;
-  ram->rw = READ;
-  ram->addr = i;
-  ram->clk = !ram->clk;
-  ram->eval();
-  gtkw->dump(clk);
-  clk++;
-  ram->clk = !ram->clk;
-  while(ram->dataout != 15)
+    for(j = 1; j <=2; j++)
     {
-      if(j%2)
-        i++;
-      ram->addr = i;
-      ram->eval();
-      gtkw->dump(clk);
-      ram->clk = !ram->clk;
-      clk++;
-      j++;
+        gtkw->dump(clk);
+        ram->clk = !ram->clk;
+        ram->eval();
+        clk++;
     }
 
-  for(i = 0; i < 6; i++)
+    // Leer los datos guardados
+    i = j = 0;
+    ram->rw = READ;
+    ram->addr = i;
+    ram->clk = !ram->clk;
+    ram->eval();
+    gtkw->dump(clk);
+    clk++;
+    ram->clk = !ram->clk;
+    while(i <= 15)
     {
-      ram->rst = i == 2;
-      ram->eval();
-      gtkw->dump(clk);
-      ram->clk = !ram->clk;
-      clk++;
+        if(j%2)
+            i++;
+        ram->addr = i;
+        ram->eval();
+        gtkw->dump(clk);
+        ram->clk = !ram->clk;
+        clk++;
+        j++;
     }
-  
-  if(Verilated::gotFinish())
+
+    // Verificar que funcione el reset
+    for(i = 0; i < 6; i++)
+    {
+        ram->rst = i == 2;
+        ram->eval();
+        gtkw->dump(clk);
+        ram->clk = !ram->clk;
+        clk++;
+    }
+
+    if(Verilated::gotFinish())
+        exit(0);
+    gtkw->close();
     exit(0);
-  gtkw->close();
-  exit(0);
 
-  return 0;
+    return 0;
 }
